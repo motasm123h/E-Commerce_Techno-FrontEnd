@@ -89,7 +89,8 @@ export function CartProvider({ children }) {
             removeFromCart, 
             updateQuantity, 
             clearCart,
-            cartTotal 
+            cartTotal,
+            cart
         }}>
             {children}
         </CartContext.Provider>

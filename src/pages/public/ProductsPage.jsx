@@ -2,36 +2,138 @@
 // import { useProducts } from '../../hooks/useProducts';
 // import ProductCard from '../../components/products/ProductCard';
 // import { useState, useEffect } from 'react';
+// import { useTranslation } from 'react-i18next'; 
+// import api from '../../services/api';
+
+// const FilterAccordion = ({ title, children, defaultOpen = false, isMain = false }) => {
+//     const [isOpen, setIsOpen] = useState(defaultOpen);
+//     const { i18n } = useTranslation();
+
+//     return (
+//         <div className="border-b border-slate-100 last:border-0">
+//             <button
+//                 type="button"
+//                 onClick={() => setIsOpen(!isOpen)}
+//                 className={`w-full flex justify-between items-center py-3 px-4 transition-colors ${
+//                     isMain ? 'bg-[#00cc88] text-white text-xs font-black uppercase tracking-wider' : 'bg-white text-slate-700 text-[12px] font-bold hover:bg-slate-50'
+//                 }`}
+//             >
+//                 <span>{typeof title === 'object' ? (title?.[i18n.language] || title?.en) : title}</span>
+//                 <svg className={`w-3.5 h-3.5 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+//                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
+//                 </svg>
+//             </button>
+//             {isOpen && <div className={`px-4 py-3 ${isMain ? 'bg-white' : 'bg-slate-50/40 ps-6'}`}>{children}</div>}
+//         </div>
+//     );
+// };
+
+// const ProductSkeleton = () => {
+//     return (
+//         <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white p-5 space-y-4 animate-pulse">
+//             <div className="w-full aspect-square bg-slate-100 rounded-xl" />
+//             <div className="space-y-2">
+//                 <div className="h-4 bg-slate-100 rounded w-5/6" />
+//                 <div className="h-4 bg-slate-100 rounded w-2/3" />
+//                 <div className="h-4 bg-slate-100 rounded w-1/3 pt-2" />
+//             </div>
+//         </div>
+//     );
+// };
 
 // export default function ProductsPage() {
+//     const { t, i18n } = useTranslation(); 
 //     const { products, pagination, loading, error } = useProducts();
 //     const [searchParams, setSearchParams] = useSearchParams();
 
-//     const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
-//     const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
-//     const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || 'newest');
+//     const minPrice = searchParams.get('min_price') || '';
+//     const maxPrice = searchParams.get('max_price') || '';
+//     const sortBy = searchParams.get('sort_by') || 'newest';
+//     const sectionId = searchParams.get('section_id');
+    
+//     const activeTagId = searchParams.get('tag_id') || '';
+//     const [publicTags, setPublicTags] = useState([]);
+
+//     const [dynamicFilters, setDynamicFilters] = useState([]);
+//     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+//     const isRtl = i18n.language === 'ar';
 
 //     useEffect(() => {
-//         setMinPrice(searchParams.get('min_price') || '');
-//         setMaxPrice(searchParams.get('max_price') || '');
-//         setSortBy(searchParams.get('sort_by') || 'newest');
+//         api.get('/public/tags')
+//             .then(res => {
+//                 if (Array.isArray(res.data)) setPublicTags(res.data);
+//             })
+//             .catch(err => console.error("Error fetching public global metrics tags", err));
+//     }, []);
+
+//     useEffect(() => {
+//         if (sectionId) {
+//             api.get(`/public/sections/filters?section_id=${sectionId}`)
+//                 .then(res => {
+//                     if (res.data?.success) setDynamicFilters(res.data.data);
+//                 })
+//                 .catch(err => console.error("Error fetching section filters", err));
+//         } else {
+//             setDynamicFilters([]);
+//         }
+//     }, [sectionId]);
+
+//     useEffect(() => {
+//         setIsMobileFilterOpen(false);
 //     }, [searchParams]);
 
-//     const handleFilter = (e) => {
+//     const handlePriceFilterSubmit = (e) => {
 //         if (e) e.preventDefault();
-//         const newParams = new URLSearchParams(); 
+//         const newParams = new URLSearchParams(searchParams);
         
-//         if (minPrice) newParams.set('min_price', minPrice);
-//         if (maxPrice) newParams.set('max_price', maxPrice);
-//         newParams.set('sort_by', sortBy);
+//         const minVal = e.target.elements.min_price.value;
+//         const maxVal = e.target.elements.max_price.value;
+
+//         if (minVal) newParams.set('min_price', minVal); else newParams.delete('min_price');
+//         if (maxVal) newParams.set('max_price', maxVal); else newParams.delete('max_price');
+        
 //         newParams.set('page', '1'); 
-        
 //         setSearchParams(newParams);
 //     };
 
-//     const clearFilters = () => {
-//         setSearchParams({});
+//     const handleSortChange = (newSortValue) => {
+//         const newParams = new URLSearchParams(searchParams);
+//         newParams.set('sort_by', newSortValue);
+//         newParams.set('page', '1');
+//         setSearchParams(newParams);
 //     };
+
+//     const handleTagSelectToggle = (tagId) => {
+//         const newParams = new URLSearchParams(searchParams);
+//         if (String(activeTagId) === String(tagId)) {
+//             newParams.delete('tag_id');
+//         } else {
+//             newParams.set('tag_id', tagId.toString());
+//         }
+//         newParams.set('page', '1');
+//         setSearchParams(newParams);
+//     };
+
+//     const handleCheckboxChange = (valueId, isChecked) => {
+//         const newParams = new URLSearchParams(searchParams);
+//         let currentValues = newParams.getAll('attribute_values[]');
+
+//         if (isChecked) {
+//             if (!currentValues.includes(valueId.toString())) {
+//                 newParams.append('attribute_values[]', valueId.toString());
+//             }
+//         } else {
+//             newParams.delete('attribute_values[]');
+//             currentValues.filter(id => id !== valueId.toString()).forEach(id => {
+//                 newParams.append('attribute_values[]', id);
+//             });
+//         }
+//         newParams.set('page', '1');
+//         setSearchParams(newParams);
+//     };
+
+//     const clearFilters = () => setSearchParams(sectionId ? { section_id: sectionId } : {});
 
 //     const handlePageChange = (newPage) => {
 //         const newParams = new URLSearchParams(searchParams);
@@ -40,94 +142,177 @@
 //         window.scrollTo({ top: 0, behavior: 'smooth' }); 
 //     };
 
-//     return (
-        
-//         <div className="w-full max-w-full mx-auto px-6 md:px-12 lg:px-16 xl:px-20 py-10 space-y-8">
-            
-//             <div className="bg-white border-b border-gray-200 pb-6 flex flex-col md:flex-row justify-between items-end gap-6">
-//                 <div>
-//                     <h1 className="text-3xl font-black text-gray-900 uppercase tracking-tighter">Catalog</h1>
-//                     <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
-//                         {pagination?.total || 0} Products Available
-//                     </p>
+//     const activeAttributeValues = searchParams.getAll('attribute_values[]');
+
+//     const FilterFormContent = () => (
+//         <form onSubmit={handlePriceFilterSubmit} className="space-y-6">
+//             <div className="space-y-3">
+//                 <label className="text-xs font-black uppercase text-slate-400 tracking-wider">
+//                     {isRtl ? 'نطاق الأسعار' : 'Price Range'}
+//                 </label>
+//                 <div className="flex items-center gap-2">
+//                     <input type="number" name="min_price" placeholder={isRtl ? "الأدنى" : "Min"} defaultValue={minPrice} className="w-full border border-slate-200 text-xs font-semibold py-2 px-3 rounded-xl outline-none focus:border-[#00cc88] bg-white font-mono" />
+//                     <span className="text-slate-300 font-bold">-</span>
+//                     <input type="number" name="max_price" placeholder={isRtl ? "الأعلى" : "Max"} defaultValue={maxPrice} className="w-full border border-slate-200 text-xs font-semibold py-2 px-3 rounded-xl outline-none focus:border-[#00cc88] bg-white font-mono" />
 //                 </div>
-
-//                 <form onSubmit={handleFilter} className="flex flex-wrap items-end gap-4 w-full md:w-auto">
-//                     <div className="flex flex-col gap-1 flex-grow md:flex-grow-0">
-//                         <label className="text-[9px] font-black uppercase text-gray-400">Sort By</label>
-//                         <select 
-//                             value={sortBy} 
-//                             onChange={(e) => setSortBy(e.target.value)}
-//                             className="bg-gray-50 border-b-2 border-gray-900 px-3 py-2 text-xs font-bold focus:outline-none cursor-pointer w-full"
-//                         >
-//                             <option value="newest">Newest</option>
-//                             <option value="price_asc">Price: Low to High</option>
-//                             <option value="price_desc">Price: High to Low</option>
-//                         </select>
-//                     </div>
-
-//                     <div className="flex flex-col gap-1 flex-grow md:flex-grow-0">
-//                         <label className="text-[9px] font-black uppercase text-gray-400">Price Range</label>
-//                         <div className="flex items-center gap-2">
-//                             <input type="number" placeholder="Min" value={minPrice} onChange={(e) => setMinPrice(e.target.value)} className="w-full md:w-20 border-b border-gray-300 text-xs py-2 focus:border-gray-900 outline-none" />
-//                             <span className="text-gray-300">—</span>
-//                             <input type="number" placeholder="Max" value={maxPrice} onChange={(e) => setMaxPrice(e.target.value)} className="w-full md:w-20 border-b border-gray-300 text-xs py-2 focus:border-gray-900 outline-none" />
-//                         </div>
-//                     </div>
-
-//                     <button type="submit" className="bg-gray-900 text-white text-[10px] font-black uppercase px-6 py-2.5 hover:bg-blue-600 transition cursor-pointer whitespace-nowrap">
-//                         Apply
-//                     </button>
-//                     <button type="button" onClick={clearFilters} className="text-[10px] font-bold text-gray-400 underline hover:text-red-500 cursor-pointer whitespace-nowrap">
-//                         Reset
-//                     </button>
-//                 </form>
+//                 <button type="submit" className="w-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider py-2.5 rounded-xl hover:bg-black transition-colors shadow-2xs cursor-pointer">
+//                     {isRtl ? 'تطبيق السعر' : 'Apply Price'}
+//                 </button>
 //             </div>
 
-//             {loading && <div className="py-20 text-center font-black uppercase tracking-widest text-gray-400">Loading Catalog...</div>}
-//             {error && <div className="py-10 text-center font-bold text-red-500">{error}</div>}
+//             <div className="w-full h-px bg-slate-100" />
 
-//             {!loading && !error && (
-//                 <>
-//                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-5 border-l border-t border-gray-100">
-//                         {products.map((product) => (
-//                             <div key={product.id} className="border-r border-b border-gray-100">
-//                                 <ProductCard product={product} />
-//                             </div>
+//             <div className="border border-slate-100 bg-white overflow-hidden rounded-2xl shadow-2xs">
+//                 {dynamicFilters.map((filter) => (
+//                     <FilterAccordion key={filter.id} title={filter.name?.[i18n.language] || filter.name?.en || filter.name} isMain={true} defaultOpen={true}>
+//                         {filter.values?.map((val) => (
+//                             <label key={val.id} className="flex items-center gap-2.5 py-2 cursor-pointer hover:text-[#00cc88] font-bold text-xs text-slate-600 transition-colors">
+//                                 <input 
+//                                     type="checkbox" 
+//                                     className="accent-[#00cc88] h-4 w-4 cursor-pointer"
+//                                     checked={activeAttributeValues.includes(val.id.toString())}
+//                                     onChange={(e) => handleCheckboxChange(val.id, e.target.checked)}
+//                                 /> 
+//                                 <span className="font-sans font-semibold text-slate-700">
+//                                     {typeof val.value === 'object' ? (val.value?.[i18n.language] || val.value?.en) : val.value}
+//                                 </span>
+//                             </label>
 //                         ))}
+//                     </FilterAccordion>
+//                 ))}
+
+//                 <div className="bg-slate-900 text-white text-xs font-black uppercase tracking-wider px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-black transition-colors" onClick={clearFilters}>
+//                     <span>✕</span>
+//                     <span>{isRtl ? 'إعادة تعيين الفلاتر' : 'Reset All'}</span>
+//                 </div>
+//             </div>
+//         </form>
+//     );
+
+//     return (
+//         <div className="w-full bg-[#f8fafc] min-h-screen">
+//             <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-8 relative">
+//                 <div className="flex flex-col lg:flex-row gap-8 items-start">
+                    
+//                     <div className="hidden lg:flex w-1/4 xl:w-1/5 shrink-0 flex-col gap-6 sticky top-28">
+//                         <div className="border-b border-slate-200 pb-2">
+//                             <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+//                                 {isRtl ? 'لوحة التصفية والمطابقة' : 'Filters Blueprint'}
+//                             </h2>
+//                         </div>
+//                         <FilterFormContent />
 //                     </div>
 
-//                     {pagination && pagination.last_page > 1 && (
-//                         <div className="flex justify-center items-center gap-6 pt-10 mt-10 border-t-2 border-gray-100">
-//                             <button
-//                                 onClick={() => handlePageChange(pagination.current_page - 1)}
-//                                 disabled={pagination.current_page === 1}
-//                                 className="px-6 py-3 border-2 border-gray-900 bg-white text-gray-900 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 hover:bg-gray-900 hover:text-white transition cursor-pointer"
-//                             >
-//                                 Prev
-//                             </button>
-//                             <span className="text-xs font-black uppercase tracking-widest text-gray-500">
-//                                 Page <span className="text-gray-900">{pagination.current_page}</span> of {pagination.last_page}
-//                             </span>
-//                             <button
-//                                 onClick={() => handlePageChange(pagination.current_page + 1)}
-//                                 disabled={pagination.current_page === pagination.last_page}
-//                                 className="px-6 py-3 border-2 border-gray-900 bg-white text-gray-900 text-[10px] font-black uppercase tracking-widest disabled:opacity-30 hover:bg-gray-900 hover:text-white transition cursor-pointer"
-//                             >
-//                                 Next
-//                             </button>
+//                     <div className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${isMobileFilterOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}>
+//                         <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs" onClick={() => setIsMobileFilterOpen(false)} />
+                        
+//                         <div className={`fixed inset-y-0 start-0 w-4/5 max-w-sm bg-white p-6 shadow-2xl flex flex-col space-y-4 overflow-y-auto transform transition-transform duration-300 ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'}`}>
+//                             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+//                                 <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+//                                     {isRtl ? 'تصفية المنتجات' : 'Refine Products'}
+//                                 </h2>
+//                                 <button onClick={() => setIsMobileFilterOpen(false)} className="text-slate-400 hover:text-slate-700 font-bold text-base p-1">✕</button>
+//                             </div>
+//                             <FilterFormContent />
 //                         </div>
-//                     )}
-//                 </>
-//             )}
+//                     </div>
+
+//                     <div className="w-full lg:w-3/4 xl:w-4/5 space-y-4">
+                        
+//                         {/* {publicTags.length > 0 && (
+//                             <div className="w-full flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+//                                 {publicTags.map((tag) => (
+//                                     <button
+//                                         key={tag.id}
+//                                         onClick={() => handleTagSelectToggle(tag.id)}
+//                                         className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide border transition-all cursor-pointer whitespace-nowrap select-none active:scale-95 ${
+//                                             String(activeTagId) === String(tag.id)
+//                                                 ? 'bg-[#00cc88] border-[#00cc88] text-white shadow-xs'
+//                                                 : 'bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300'
+//                                         }`}
+//                                     >
+//                                         #{tag.name?.[i18n.language] || tag.name?.en || tag.name}
+//                                     </button>
+//                                 ))}
+//                             </div>
+//                         )} */}
+
+//                         <div className="flex flex-row justify-between items-center pb-4 mb-2 border-b border-slate-100 gap-4 pt-1">
+//                             <div className="flex items-center gap-3">
+//                                 <button 
+//                                     onClick={() => setIsMobileFilterOpen(true)}
+//                                     className="lg:hidden bg-white border border-slate-200 text-slate-700 p-2.5 rounded-xl flex items-center justify-center transition cursor-pointer hover:bg-slate-50 shadow-2xs"
+//                                     title="Open Filters"
+//                                 >
+//                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+//                                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+//                                     </svg>
+//                                 </button>
+//                                 <h1 className="text-lg sm:text-xl font-black text-slate-800 uppercase tracking-widest">
+//                                     {t('catalog')} 
+//                                 </h1>
+//                             </div>
+
+//                             <div className="flex items-center gap-2">
+//                                 <select 
+//                                     value={sortBy} 
+//                                     onChange={(e) => handleSortChange(e.target.value)}
+//                                     className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 bg-white outline-none cursor-pointer focus:border-[#00cc88] shadow-2xs font-bold uppercase tracking-wider"
+//                                 >
+//                                     <option value="newest">{isRtl ? 'المنتجات الأحدث' : 'Latest Drop'}</option>
+//                                     <option value="price_asc">{isRtl ? 'السعر: من الأقل للأعلى' : 'Price: Low to High'}</option>
+//                                     <option value="price_desc">{isRtl ? 'السعر: من الأعلى للأقل' : 'Price: High to Low'}</option>
+//                                 </select>
+//                             </div>
+//                         </div>
+
+//                         {error && <div className="py-10 text-center text-rose-500 font-bold text-xs bg-rose-50 border border-rose-100 rounded-xl">{error}</div>}
+
+//                         {loading ? (
+//                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+//                                 {[...Array(10)].map((_, i) => (
+//                                     <ProductSkeleton key={i} />
+//                                 ))}
+//                             </div>
+//                         ) : (
+//                             !error && (
+//                                 <>
+//                                     {products.length === 0 ? (
+//                                         <div className="py-20 text-center text-slate-400 font-bold text-xs bg-white rounded-2xl border border-dashed border-slate-200 uppercase tracking-widest">
+//                                             {isRtl ? 'لم نجد أي منتجات تطابق خيارات التصفية الحالية.' : 'No assets found matching the chosen parameters.'}
+//                                         </div>
+//                                     ) : (
+//                                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+//                                             {products.map((product, index) => (
+//                                                 <div key={product.id} className="rounded-2xl overflow-hidden bg-white shadow-2xs border border-transparent hover:border-slate-100/60 transition duration-300">
+//                                                     <ProductCard product={product} index={index}/>
+//                                                 </div>
+//                                             ))}
+//                                         </div>
+//                                     )}
+
+//                                     {pagination && pagination.last_page > 1 && (
+//                                         <div className="flex justify-center items-center gap-4 pt-12 mt-8 border-t border-slate-100">
+//                                             <button onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1} className="px-4 py-2 border border-slate-200 rounded-xl bg-white text-xs disabled:opacity-30 font-black hover:border-[#00cc88] hover:text-[#00cc88] transition-all cursor-pointer select-none shadow-2xs">
+//                                                 {isRtl ? 'السابق' : 'Prev'}
+//                                             </button>
+//                                             <span className="text-xs text-slate-400 font-mono font-bold">
+//                                                 {isRtl ? `صفحة ${pagination.current_page} / ${pagination.last_page}` : `Page ${pagination.current_page} / ${pagination.last_page}`}
+//                                             </span>
+//                                             <button onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page} className="px-4 py-2 border border-slate-200 rounded-xl bg-white text-xs disabled:opacity-30 font-black hover:border-[#00cc88] hover:text-[#00cc88] transition-all cursor-pointer select-none shadow-2xs">
+//                                                 {isRtl ? 'التالي' : 'Next'}
+//                                             </button>
+//                                         </div>
+//                                     )}
+//                                 </>
+//                             )
+//                         )}
+//                     </div>
+//                 </div>
+//             </div>
 //         </div>
 //     );
 // }
-
-
-
-
-
 
 
 
@@ -136,74 +321,141 @@ import { useSearchParams } from 'react-router-dom';
 import { useProducts } from '../../hooks/useProducts';
 import ProductCard from '../../components/products/ProductCard';
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next'; 
+import api from '../../services/api';
 
-// --- مكون القائمة المنسدلة (Accordion) للفلاتر ---
 const FilterAccordion = ({ title, children, defaultOpen = false, isMain = false }) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
+    const { i18n } = useTranslation();
 
     return (
-        <div className="border-b border-gray-100 last:border-0">
+        <div className="border-b border-slate-100 last:border-0">
             <button
                 type="button"
                 onClick={() => setIsOpen(!isOpen)}
-                className={`w-full flex justify-between items-center py-2.5 px-3 transition-colors ${
-                    isMain 
-                        ? 'bg-[#00a8e8] text-white text-[13px] font-bold' 
-                        : 'bg-white text-gray-700 text-[12px] font-semibold hover:bg-gray-50'
+                className={`w-full flex justify-between items-center py-3 px-4 transition-colors ${
+                    isMain ? 'bg-[#00cc88] text-white text-xs font-black uppercase tracking-wider' : 'bg-white text-slate-700 text-[12px] font-bold hover:bg-slate-50'
                 }`}
             >
-                <span>{title}</span>
-                <svg 
-                    className={`w-4 h-4 transform transition-transform duration-200 ${isOpen ? (isMain ? 'rotate-180' : 'rotate-90') : ''}`} 
-                    fill="none" 
-                    stroke="currentColor" 
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={isMain ? "M19 9l-7 7-7-7" : "M9 5l7 7-7 7"} />
+                <span>{typeof title === 'object' ? (title?.[i18n.language] || title?.en) : title}</span>
+                <svg className={`w-3.5 h-3.5 transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M19 9l-7 7-7-7" />
                 </svg>
             </button>
-            {isOpen && (
-                <div className={`px-3 py-2 ${isMain ? 'bg-white' : 'bg-gray-50/50 pl-6'}`}>
-                    {children}
-                </div>
-            )}
+            {isOpen && <div className={`px-4 py-3 ${isMain ? 'bg-white' : 'bg-slate-50/40 ps-6'}`}>{children}</div>}
+        </div>
+    );
+};
+
+const ProductSkeleton = () => {
+    return (
+        <div className="border border-slate-100 rounded-2xl overflow-hidden bg-white p-5 space-y-4 animate-pulse">
+            <div className="w-full aspect-square bg-slate-100 rounded-xl" />
+            <div className="space-y-2">
+                <div className="h-4 bg-slate-100 rounded w-5/6" />
+                <div className="h-4 bg-slate-100 rounded w-2/3" />
+                <div className="h-4 bg-slate-100 rounded w-1/3 pt-2" />
+            </div>
         </div>
     );
 };
 
 export default function ProductsPage() {
+    const { t, i18n } = useTranslation(); 
     const { products, pagination, loading, error } = useProducts();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    const [minPrice, setMinPrice] = useState(searchParams.get('min_price') || '');
-    const [maxPrice, setMaxPrice] = useState(searchParams.get('max_price') || '');
-    const [sortBy, setSortBy] = useState(searchParams.get('sort_by') || 'newest');
+    const minPrice = searchParams.get('min_price') || '';
+    const maxPrice = searchParams.get('max_price') || '';
+    const sortBy = searchParams.get('sort_by') || 'newest';
+    const sectionId = searchParams.get('section_id');
+    
+    const activeTagId = searchParams.get('tag_id') || '';
+    const [publicTags, setPublicTags] = useState([]);
+
+    const [dynamicFilters, setDynamicFilters] = useState([]);
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+    const isRtl = i18n.language === 'ar';
 
     useEffect(() => {
-        setMinPrice(searchParams.get('min_price') || '');
-        setMaxPrice(searchParams.get('max_price') || '');
-        setSortBy(searchParams.get('sort_by') || 'newest');
+        api.get('/public/tags')
+            .then(res => {
+                if (Array.isArray(res.data)) setPublicTags(res.data);
+            })
+            .catch(err => console.error("Error fetching public global metrics tags", err));
+    }, []);
+
+    useEffect(() => {
+        if (sectionId) {
+            api.get(`/public/sections/filters?section_id=${sectionId}`)
+                .then(res => {
+                    if (res.data?.success) setDynamicFilters(res.data.data);
+                    console.log(res.data.data)
+                })
+                .catch(err => console.error("Error fetching section filters", err));
+        } else {
+            setDynamicFilters([]);
+        }
+    }, [sectionId]);
+
+    useEffect(() => {
+        setIsMobileFilterOpen(false);
     }, [searchParams]);
 
-    const handleFilter = (e) => {
+    const handlePriceFilterSubmit = (e) => {
         if (e) e.preventDefault();
-        const newParams = new URLSearchParams(searchParams); 
+        const newParams = new URLSearchParams(searchParams);
         
-        if (minPrice) newParams.set('min_price', minPrice);
-        else newParams.delete('min_price');
+        const minVal = e.target.elements.min_price.value;
+        const maxVal = e.target.elements.max_price.value;
 
-        if (maxPrice) newParams.set('max_price', maxPrice);
-        else newParams.delete('max_price');
-
-        newParams.set('sort_by', sortBy);
+        if (minVal) newParams.set('min_price', minVal); else newParams.delete('min_price');
+        if (maxVal) newParams.set('max_price', maxVal); else newParams.delete('max_price');
+        
         newParams.set('page', '1'); 
-        
         setSearchParams(newParams);
     };
 
-    const clearFilters = () => {
-        setSearchParams({});
+    const handleSortChange = (newSortValue) => {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.set('sort_by', newSortValue);
+        newParams.set('page', '1');
+        setSearchParams(newParams);
     };
+
+    const handleTagSelectToggle = (tagId) => {
+        const newParams = new URLSearchParams(searchParams);
+        if (String(activeTagId) === String(tagId)) {
+            newParams.delete('tag_id');
+        } else {
+            newParams.set('tag_id', tagId.toString());
+        }
+        newParams.set('page', '1');
+        setSearchParams(newParams);
+    };
+
+    // ⚡ تحديث ذكي: يضمن الحفاظ على الفلاتر المتعددة وحقنها دفعة واحدة بداخل مسار المتصفح كـ Array
+    const handleCheckboxChange = (valueId, isChecked) => {
+        const newParams = new URLSearchParams(searchParams);
+        let currentValues = newParams.getAll('attribute_values[]');
+
+        if (isChecked) {
+            if (!currentValues.includes(valueId.toString())) {
+                newParams.append('attribute_values[]', valueId.toString());
+            }
+        } else {
+            // تفريغ وإعادة بناء الحقول المتبقية فقط عند إلغاء التحديد
+            newParams.delete('attribute_values[]');
+            currentValues
+                .filter(id => id !== valueId.toString())
+                .forEach(id => newParams.append('attribute_values[]', id));
+        }
+        newParams.set('page', '1');
+        setSearchParams(newParams);
+    };
+
+    const clearFilters = () => setSearchParams(sectionId ? { section_id: sectionId } : {});
 
     const handlePageChange = (newPage) => {
         const newParams = new URLSearchParams(searchParams);
@@ -212,163 +464,176 @@ export default function ProductsPage() {
         window.scrollTo({ top: 0, behavior: 'smooth' }); 
     };
 
+    const activeAttributeValues = searchParams.getAll('attribute_values[]');
+
+    const FilterFormContent = () => (
+        <form onSubmit={handlePriceFilterSubmit} className="space-y-6">
+            <div className="space-y-3">
+                <label className="text-xs font-black uppercase text-slate-400 tracking-wider">
+                    {isRtl ? 'نطاق الأسعار' : 'Price Range'}
+                </label>
+                <div className="flex items-center gap-2">
+                    <input type="number" name="min_price" placeholder={isRtl ? "الأدنى" : "Min"} defaultValue={minPrice} className="w-full border border-slate-200 text-xs font-semibold py-2 px-3 rounded-xl outline-none focus:border-[#00cc88] bg-white font-mono" />
+                    <span className="text-slate-300 font-bold">-</span>
+                    <input type="number" name="max_price" placeholder={isRtl ? "الأعلى" : "Max"} defaultValue={maxPrice} className="w-full border border-slate-200 text-xs font-semibold py-2 px-3 rounded-xl outline-none focus:border-[#00cc88] bg-white font-mono" />
+                </div>
+                <button type="submit" className="w-full bg-slate-900 text-white text-[11px] font-black uppercase tracking-wider py-2.5 rounded-xl hover:bg-black transition-colors shadow-2xs cursor-pointer">
+                    {isRtl ? 'تطبيق السعر' : 'Apply Price'}
+                </button>
+            </div>
+
+            <div className="w-full h-px bg-slate-100" />
+
+            <div className="border border-slate-100 bg-white overflow-hidden rounded-2xl shadow-2xs">
+                {dynamicFilters.map((filter) => (
+                    <FilterAccordion key={filter.id} title={filter.name?.[i18n.language] || filter.name?.en || filter.name} isMain={true} defaultOpen={true}>
+                        {/* تصفية وعرض الخيارات المتوفرة للخاصية */}
+                        <div className="flex flex-col space-y-1">
+                            {filter.values?.map((val) => (
+                                <label key={val.id} className="flex items-center gap-2.5 py-1.5 cursor-pointer hover:text-[#00cc88] font-bold text-xs text-slate-600 transition-colors">
+                                    <input 
+                                        type="checkbox" 
+                                        className="accent-[#00cc88] h-4 w-4 cursor-pointer rounded"
+                                        checked={activeAttributeValues.includes(val.id.toString())}
+                                        onChange={(e) => handleCheckboxChange(val.id, e.target.checked)}
+                                    /> 
+                                    <span className="font-sans font-semibold text-slate-700">
+                                        {typeof val.value === 'object' ? (val.value?.[i18n.language] || val.value?.en) : val.value}
+                                    </span>
+                                </label>
+                            ))}
+                        </div>
+                    </FilterAccordion>
+                ))}
+
+                <div className="bg-slate-900 text-white text-xs font-black uppercase tracking-wider px-4 py-3 flex justify-between items-center cursor-pointer hover:bg-black transition-colors" onClick={clearFilters}>
+                    <span>✕</span>
+                    <span>{isRtl ? 'إعادة تعيين الفلاتر' : 'Reset All'}</span>
+                </div>
+            </div>
+        </form>
+    );
+
     return (
-        <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-8">
-            
-            <div className="flex flex-col lg:flex-row gap-8 items-start">
-                
-                {/* --- الشريط الجانبي (Sidebar - Filters) --- */}
-                <div className="w-full lg:w-1/4 xl:w-1/5 shrink-0 flex flex-col gap-6 sticky top-24">
+        <div className="w-full bg-[#f8fafc] min-h-screen">
+            <div className="w-full max-w-[1600px] mx-auto px-4 md:px-8 py-8 relative">
+                <div className="flex flex-col lg:flex-row gap-8 items-start">
                     
-                    {/* ترويسة الفلاتر */}
-                    <div className="border-b border-gray-200 pb-2">
-                        <h2 className="text-[15px] font-normal text-gray-800 uppercase tracking-widest">Filters</h2>
+                    <div className="hidden lg:flex w-1/4 xl:w-1/5 shrink-0 flex-col gap-6 sticky top-28">
+                        <div className="border-b border-slate-200 pb-2">
+                            <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">
+                                {isRtl ? 'لوحة التصفية والمطابقة' : 'Filters Blueprint'}
+                            </h2>
+                        </div>
+                        <FilterFormContent />
                     </div>
 
-                    <form onSubmit={handleFilter} className="space-y-6">
-                        {/* فلتر السعر */}
-                        <div className="space-y-3">
-                            <label className="text-[13px] font-bold text-gray-800">Price</label>
+                    <div className={`fixed inset-0 z-50 lg:hidden transition-all duration-300 ${isMobileFilterOpen ? 'visible opacity-100' : 'invisible opacity-0'}`}>
+                        <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-xs" onClick={() => setIsMobileFilterOpen(false)} />
+                        
+                        <div className={`fixed inset-y-0 start-0 w-4/5 max-w-sm bg-white p-6 shadow-2xl flex flex-col space-y-4 overflow-y-auto transform transition-transform duration-300 ${isMobileFilterOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full'}`}>
+                            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
+                                <h2 className="text-sm font-black text-slate-900 uppercase tracking-wider">
+                                    {isRtl ? 'تصفية المنتجات' : 'Refine Products'}
+                                </h2>
+                                <button onClick={() => setIsMobileFilterOpen(false)} className="text-slate-400 hover:text-slate-700 font-bold text-base p-1">✕</button>
+                            </div>
+                            <FilterFormContent />
+                        </div>
+                    </div>
+
+                    <div className="w-full lg:w-3/4 xl:w-4/5 space-y-4">
+                        
+                        {publicTags.length > 0 && (
+                            <div className="w-full flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+                                {publicTags.map((tag) => (
+                                    <button
+                                        key={tag.id}
+                                        onClick={() => handleTagSelectToggle(tag.id)}
+                                        className={`px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-wide border transition-all cursor-pointer whitespace-nowrap select-none active:scale-95 ${
+                                            String(activeTagId) === String(tag.id)
+                                                ? 'bg-[#00cc88] border-[#00cc88] text-white shadow-xs'
+                                                : 'bg-white border-slate-200 text-slate-500 hover:text-slate-800 hover:border-slate-300'
+                                        }`}
+                                    >
+                                        #{tag.name?.[i18n.language] || tag.name?.en || tag.name}
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        <div className="flex flex-row justify-between items-center pb-4 mb-2 border-b border-slate-100 gap-4 pt-1">
                             <div className="flex items-center gap-3">
-                                <input 
-                                    type="number" 
-                                    placeholder="Min" 
-                                    value={minPrice} 
-                                    onChange={(e) => setMinPrice(e.target.value)} 
-                                    className="w-full border border-gray-200 text-xs py-2 px-3 rounded focus:border-[#00a8e8] outline-none" 
-                                />
-                                <span className="text-gray-400">-</span>
-                                <input 
-                                    type="number" 
-                                    placeholder="Max" 
-                                    value={maxPrice} 
-                                    onChange={(e) => setMaxPrice(e.target.value)} 
-                                    className="w-full border border-gray-200 text-xs py-2 px-3 rounded focus:border-[#00a8e8] outline-none" 
-                                />
-                            </div>
-                            <button type="submit" className="hidden">Apply Price</button>
-                        </div>
-
-                        {/* خط مزخرف أزرق مثل الصورة */}
-                        <div className="w-full h-[2px] bg-[#00a8e8] relative">
-                            <div className="absolute left-0 -top-1 w-2.5 h-2.5 rounded-full bg-[#00a8e8]"></div>
-                            <div className="absolute right-0 -top-1 w-2.5 h-2.5 rounded-full bg-[#00a8e8]"></div>
-                        </div>
-
-                        {/* نظام الفلاتر المتداخل (Accordions) */}
-                        <div className="border border-gray-100 shadow-sm bg-white overflow-hidden">
-                            <FilterAccordion title="Brand" isMain={true} defaultOpen={true}>
-                                {/* ستحتاج هنا لعرض البراندات من الباك إند */}
-                                <label className="flex items-center gap-2 py-1.5 cursor-pointer hover:text-[#00a8e8] text-[12px] text-gray-600">
-                                    <input type="checkbox" className="accent-[#00a8e8]" /> ASUS
-                                </label>
-                                <label className="flex items-center gap-2 py-1.5 cursor-pointer hover:text-[#00a8e8] text-[12px] text-gray-600">
-                                    <input type="checkbox" className="accent-[#00a8e8]" /> GIGABYTE
-                                </label>
-                            </FilterAccordion>
-
-                            <FilterAccordion title="Specifications" isMain={true} defaultOpen={true}>
-                                <FilterAccordion title="Screen Size">
-                                    <label className="flex items-center gap-2 py-1 cursor-pointer text-[12px] text-gray-500">
-                                        <input type="checkbox" className="accent-[#00a8e8]" /> 24-inch
-                                    </label>
-                                    <label className="flex items-center gap-2 py-1 cursor-pointer text-[12px] text-gray-500">
-                                        <input type="checkbox" className="accent-[#00a8e8]" /> 27-inch
-                                    </label>
-                                </FilterAccordion>
-                                <FilterAccordion title="Refresh Rate">
-                                    <label className="flex items-center gap-2 py-1 cursor-pointer text-[12px] text-gray-500">
-                                        <input type="checkbox" className="accent-[#00a8e8]" /> 144Hz
-                                    </label>
-                                    <label className="flex items-center gap-2 py-1 cursor-pointer text-[12px] text-gray-500">
-                                        <input type="checkbox" className="accent-[#00a8e8]" /> 240Hz
-                                    </label>
-                                </FilterAccordion>
-                            </FilterAccordion>
-
-                            {/* زر تفريغ الفلاتر */}
-                            <div className="bg-[#00a8e8] text-white text-[12px] font-bold px-3 py-2.5 flex justify-between items-center cursor-pointer hover:bg-[#0096d1]" onClick={clearFilters}>
-                                <span>✕</span>
-                                <span>Reset All</span>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                {/* --- منطقة المنتجات الرئيسية (Main Content) --- */}
-                <div className="w-full lg:w-3/4 xl:w-4/5">
-                    
-                    {/* الترويسة العلوية للمنتجات */}
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-6 mb-6">
-                        <h1 className="text-2xl sm:text-3xl font-normal text-gray-800 uppercase tracking-wide">
-                            CATALOG
-                        </h1>
-
-                        <div className="flex items-center gap-4 mt-4 sm:mt-0">
-                            {/* أيقونات طريقة العرض (شبكة / قائمة) */}
-                            <div className="flex items-center gap-2 text-gray-400">
-                                <svg className="w-5 h-5 text-[#00a8e8] cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                                <svg className="w-5 h-5 cursor-pointer hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+                                <button 
+                                    onClick={() => setIsMobileFilterOpen(true)}
+                                    className="lg:hidden bg-white border border-slate-200 text-slate-700 p-2.5 rounded-xl flex items-center justify-center transition cursor-pointer hover:bg-slate-50 shadow-2xs"
+                                    title="Open Filters"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                                    </svg>
+                                </button>
+                                <h1 className="text-lg sm:text-xl font-black text-slate-800 uppercase tracking-widest">
+                                    {t('catalog')} 
+                                </h1>
                             </div>
 
-                            <div className="flex items-center gap-2 border border-gray-200 rounded px-2 bg-white">
+                            <div className="flex items-center gap-2">
                                 <select 
                                     value={sortBy} 
-                                    onChange={(e) => {
-                                        setSortBy(e.target.value);
-                                        handleFilter();
-                                    }}
-                                    className="bg-transparent py-1.5 text-xs text-gray-600 focus:outline-none cursor-pointer"
+                                    onChange={(e) => handleSortChange(e.target.value)}
+                                    className="border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 bg-white outline-none cursor-pointer focus:border-[#00cc88] shadow-2xs font-bold uppercase tracking-wider"
                                 >
-                                    <option value="newest">Latest</option>
-                                    <option value="price_asc">Price: Low to High</option>
-                                    <option value="price_desc">Price: High to Low</option>
+                                    <option value="newest">{isRtl ? 'المنتجات الأحدث' : 'Latest Drop'}</option>
+                                    <option value="price_asc">{isRtl ? 'السعر: من الأقل للأعلى' : 'Price: Low to High'}</option>
+                                    <option value="price_desc">{isRtl ? 'السعر: من الأعلى للأقل' : 'Price: High to Low'}</option>
                                 </select>
                             </div>
                         </div>
-                    </div>
 
-                    {/* عرض حالات التحميل والخطأ */}
-                    {loading && <div className="py-20 text-center font-bold uppercase tracking-widest text-gray-400">Loading Catalog...</div>}
-                    {error && <div className="py-10 text-center font-bold text-red-500">{error}</div>}
+                        {error && <div className="py-10 text-center text-rose-500 font-bold text-xs bg-rose-50 border border-rose-100 rounded-xl">{error}</div>}
 
-                    {/* شبكة المنتجات (5 أعمدة) */}
-                    {!loading && !error && (
-                        <>
+                        {loading ? (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                {products.map((product) => (
-                                    <div key={product.id} className="border border-gray-100 rounded-lg overflow-hidden bg-white hover:shadow-md transition duration-300">
-                                        <ProductCard product={product} />
-                                    </div>
+                                {[...Array(10)].map((_, i) => (
+                                    <ProductSkeleton key={i} />
                                 ))}
                             </div>
+                        ) : (
+                            !error && (
+                                <>
+                                    {products.length === 0 ? (
+                                        <div className="py-20 text-center text-slate-400 font-bold text-xs bg-white rounded-2xl border border-dashed border-slate-200 uppercase tracking-widest">
+                                            {isRtl ? 'لم نجد أي منتجات تطابق خيارات التصفية الحالية.' : 'No assets found matching the chosen parameters.'}
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                                            {products.map((product, index) => (
+                                                <div key={product.id} className="rounded-2xl overflow-hidden bg-white shadow-2xs border border-transparent hover:border-slate-100/60 transition duration-300">
+                                                    <ProductCard product={product} index={index}/>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
 
-                            {/* الترقيم (Pagination) */}
-                            {pagination && pagination.last_page > 1 && (
-                                <div className="flex justify-center items-center gap-4 pt-12 mt-8">
-                                    <button
-                                        onClick={() => handlePageChange(pagination.current_page - 1)}
-                                        disabled={pagination.current_page === 1}
-                                        className="px-4 py-2 border border-gray-200 rounded bg-white text-gray-600 text-xs font-bold disabled:opacity-50 hover:border-[#00a8e8] hover:text-[#00a8e8] transition cursor-pointer"
-                                    >
-                                        Prev
-                                    </button>
-                                    <span className="text-xs text-gray-500">
-                                        Showing {pagination.current_page} of {pagination.last_page}
-                                    </span>
-                                    <button
-                                        onClick={() => handlePageChange(pagination.current_page + 1)}
-                                        disabled={pagination.current_page === pagination.last_page}
-                                        className="px-4 py-2 border border-gray-200 rounded bg-white text-gray-600 text-xs font-bold disabled:opacity-50 hover:border-[#00a8e8] hover:text-[#00a8e8] transition cursor-pointer"
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-                            )}
-                        </>
-                    )}
+                                    {pagination && pagination.last_page > 1 && (
+                                        <div className="flex justify-center items-center gap-4 pt-12 mt-8 border-t border-slate-100">
+                                            <button onClick={() => handlePageChange(pagination.current_page - 1)} disabled={pagination.current_page === 1} className="px-4 py-2 border border-slate-200 rounded-xl bg-white text-xs disabled:opacity-30 font-black hover:border-[#00cc88] hover:text-[#00cc88] transition-all cursor-pointer select-none shadow-2xs">
+                                                {isRtl ? 'السابق' : 'Prev'}
+                                            </button>
+                                            <span className="text-xs text-slate-400 font-mono font-bold">
+                                                {isRtl ? `صفحة ${pagination.current_page} / ${pagination.last_page}` : `Page ${pagination.current_page} / ${pagination.last_page}`}
+                                            </span>
+                                            <button onClick={() => handlePageChange(pagination.current_page + 1)} disabled={pagination.current_page === pagination.last_page} className="px-4 py-2 border border-slate-200 rounded-xl bg-white text-xs disabled:opacity-30 font-black hover:border-[#00cc88] hover:text-[#00cc88] transition-all cursor-pointer select-none shadow-2xs">
+                                                {isRtl ? 'التالي' : 'Next'}
+                                            </button>
+                                        </div>
+                                    )}
+                                </>
+                            )
+                        )}
+                    </div>
                 </div>
-
             </div>
         </div>
     );

@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+# إذا كان لديك خريطة للموقع (Sitemap) يمكنك إضافتها هنا لاحقاً، مثل:
+# Sitemap: http://127.0.0.1:8000/sitemap.xml

@@ -26,21 +26,27 @@ export default function HomeBanner() {
         return () => clearInterval(interval);
     }, [banners.length]);
 
-    if (loading) return <div className="w-full h-[450px] bg-gray-100 animate-pulse" />;
+    /* ⚡ التعديل 1: جعل الـ Skeleton المتجاوب يطابق أبعاد البنر الجديد ⚡ */
+    if (loading) return <div className="w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] bg-gray-100 animate-pulse" />;
     if (banners.length === 0) return null;
 
     const currentBanner = banners[activeIdx];
 
     return (
-        /* التعديل الجذري: w-full فقط بدون أي max-w أو px-4 ليمتد من الحافة للحافة */
         <div className="w-full">
-            {/* زيادة الارتفاع لـ 450px ليكون البنر ضخماً */}
-            <div className="w-full h-[450px] bg-neutral-900 overflow-hidden relative border-y border-gray-200">
+            {/* ⚡ التعديل 2: تغيير الارتفاع الثابت h-[450px] إلى ارتفاع متجاوب تدريجياً:
+               - h-[200px]: للشاشات الصغيرة جداً والموبايل عمودياً.
+               - sm:h-[300px]: للموبايل بالعرض أو الشاشات الصغيرة.
+               - md:h-[400px]: للتابلت.
+               - lg:h-[450px]: للشاشات المكتبية واللابتوب.
+            */}
+            <div className="w-full h-[200px] sm:h-[300px] md:h-[400px] lg:h-[450px] bg-neutral-900 overflow-hidden relative border-y border-gray-200">
                 {currentBanner.link_url ? (
                     <Link to={currentBanner.link_url} className="block w-full h-full">
                         <img 
                             src={getImageUrl(currentBanner.image_path)} 
                             alt="Store Promotional Banner" 
+                            /* تم استخدام object-cover لملء المساحة بأناقة، ويمكنك استخدام object-fill إذا كانت الصور مصممة خصيصاً للموبايل */
                             className="w-full h-full object-cover transition-opacity duration-500"
                         />
                     </Link>

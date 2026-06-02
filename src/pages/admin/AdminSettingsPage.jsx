@@ -1,27 +1,33 @@
 import { useState, useEffect } from 'react';
-import { useSettings } from '../../app/SettingContext';
-
+// import { useSettings } from '../../app/SettingContext';
+import { useGlobalApp } from '../../app/AppContext';
 export default function AdminSettingsPage() {
-    const { settings, loading, error, updateSettings } = useSettings();
+    const { settings, loading, error, updateSettings } = useGlobalApp();
     
     const [formData, setFormData] = useState({
-        about_foundation: '',
-        about_history: '',
-        about_who_we_are: '',
-        about_agents: '',
+        about_foundation_en: '',
+        about_foundation_ar: '',
+        about_history_en: '',
+        about_history_ar: '',
+        about_who_we_are_en: '',
+        about_who_we_are_ar: '',
+        about_agents_en: '',
+        about_agents_ar: '',
         contact_phone_1: '',
         contact_phone_2: '',
         contact_whatsapp: '',
         contact_email: '',
-        contact_address: '',
-        contact_hall_location: '',
+        contact_address_en: '',
+        contact_address_ar: '',
+        contact_hall_location_en: '',
+        contact_hall_location_ar: '',
         contact_map_url: '',
-        // --- الحقول الجديدة للفوتر والسوشيال ميديا ---
-        footer_branches: '',
+        footer_branches_en: '',
+        footer_branches_ar: '',
         footer_phones: '',
         social_facebook: '',
         social_instagram: '',
-        social_linkedin: '',
+        social_youtube: '',
         social_twitter: ''
     });
 
@@ -29,7 +35,36 @@ export default function AdminSettingsPage() {
 
     useEffect(() => {
         if (settings && Object.keys(settings).length > 0) {
-            setFormData(prev => ({ ...prev, ...settings }));
+            setFormData(prev => ({
+                ...prev,
+                about_foundation_en: settings.about_foundation?.en || (typeof settings.about_foundation === 'string' ? settings.about_foundation : ''),
+                about_foundation_ar: settings.about_foundation?.ar || '',
+                about_history_en: settings.about_history?.en || (typeof settings.about_history === 'string' ? settings.about_history : ''),
+                about_history_ar: settings.about_history?.ar || '',
+                about_who_we_are_en: settings.about_who_we_are?.en || (typeof settings.about_who_we_are === 'string' ? settings.about_who_we_are : ''),
+                about_who_we_are_ar: settings.about_who_we_are?.ar || '',
+                about_agents_en: settings.about_agents?.en || (typeof settings.about_agents === 'string' ? settings.about_agents : ''),
+                about_agents_ar: settings.about_agents?.ar || '',
+                
+                // الحقول غير المترجمة (النصوص الصافية كالهواتف والروابط والبريد)
+                contact_phone_1: settings.contact_phone_1?.en || settings.contact_phone_1 || '',
+                contact_phone_2: settings.contact_phone_2?.en || settings.contact_phone_2 || '',
+                contact_whatsapp: settings.contact_whatsapp?.en || settings.contact_whatsapp || '',
+                contact_email: settings.contact_email?.en || settings.contact_email || '',
+                contact_map_url: settings.contact_map_url?.en || settings.contact_map_url || '',
+                footer_phones: settings.footer_phones?.en || settings.footer_phones || '',
+                social_facebook: settings.social_facebook?.en || settings.social_facebook || '',
+                social_instagram: settings.social_instagram?.en || settings.social_instagram || '',
+                social_youtube: settings.social_youtube?.en || settings.social_youtube || '',
+                social_twitter: settings.social_twitter?.en || settings.social_twitter || '',
+                
+                contact_address_en: settings.contact_address?.en || (typeof settings.contact_address === 'string' ? settings.contact_address : ''),
+                contact_address_ar: settings.contact_address?.ar || '',
+                contact_hall_location_en: settings.contact_hall_location?.en || (typeof settings.contact_hall_location === 'string' ? settings.contact_hall_location : ''),
+                contact_hall_location_ar: settings.contact_hall_location?.ar || '',
+                footer_branches_en: settings.footer_branches?.en || (typeof settings.footer_branches === 'string' ? settings.footer_branches : ''),
+                footer_branches_ar: settings.footer_branches?.ar || ''
+            }));
         }
     }, [settings]);
 
@@ -42,7 +77,27 @@ export default function AdminSettingsPage() {
         e.preventDefault();
         setUiStatus({ error: null, success: false, submitting: true });
 
-        const result = await updateSettings(formData);
+        const formattedPayload = {
+            about_foundation: { en: formData.about_foundation_en, ar: formData.about_foundation_ar },
+            about_history: { en: formData.about_history_en, ar: formData.about_history_ar },
+            about_who_we_are: { en: formData.about_who_we_are_en, ar: formData.about_who_we_are_ar },
+            about_agents: { en: formData.about_agents_en, ar: formData.about_agents_ar },
+            contact_phone_1: formData.contact_phone_1,
+            contact_phone_2: formData.contact_phone_2,
+            contact_whatsapp: formData.contact_whatsapp,
+            contact_email: formData.contact_email,
+            contact_address: { en: formData.contact_address_en, ar: formData.contact_address_ar },
+            contact_hall_location: { en: formData.contact_hall_location_en, ar: formData.contact_hall_location_ar },
+            contact_map_url: formData.contact_map_url,
+            footer_branches: { en: formData.footer_branches_en, ar: formData.footer_branches_ar },
+            footer_phones: formData.footer_phones,
+            social_facebook: formData.social_facebook,
+            social_instagram: formData.social_instagram,
+            social_youtube: formData.social_youtube,
+            social_twitter: formData.social_twitter
+        };
+
+        const result = await updateSettings(formattedPayload);
         if (result.success) {
             setUiStatus({ error: null, success: true, submitting: false });
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -73,21 +128,39 @@ export default function AdminSettingsPage() {
                 {/* 1. About Us Content */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 space-y-4 shadow-xs">
                     <h3 className="text-base font-bold text-gray-800 border-b border-gray-100 pb-2">1. About Us Content CMS</h3>
-                    <div className="space-y-1">
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Foundation Summary Text</label>
-                        <textarea name="about_foundation" rows="2" value={formData.about_foundation} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Corporate History Timeline Text</label>
-                        <textarea name="about_history" rows="5" value={formData.about_history} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="block text-xs font-bold text-gray-500 uppercase">"Who We Are" Identity Declaration</label>
-                        <textarea name="about_who_we_are" rows="4" value={formData.about_who_we_are} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
-                    </div>
-                    <div className="space-y-1">
-                        <label className="block text-xs font-bold text-gray-500 uppercase">Exclusive Agency Brand Marks</label>
-                        <input type="text" name="about_agents" value={formData.about_agents} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">Foundation Summary (EN)</label>
+                            <textarea name="about_foundation_en" rows="2" value={formData.about_foundation_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">ملخص التأسيس (AR)</label>
+                            <textarea name="about_foundation_ar" rows="2" value={formData.about_foundation_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" dir="rtl" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">Corporate History Timeline (EN)</label>
+                            <textarea name="about_history_en" rows="4" value={formData.about_history_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">تاريخ الشركة العريق (AR)</label>
+                            <textarea name="about_history_ar" rows="4" value={formData.about_history_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" dir="rtl" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">"Who We Are" Declaration (EN)</label>
+                            <textarea name="about_who_we_are_en" rows="3" value={formData.about_who_we_are_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">إعلان الهوية "من نحن" (AR)</label>
+                            <textarea name="about_who_we_are_ar" rows="3" value={formData.about_who_we_are_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" dir="rtl" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">Exclusive Agency Brand Marks (EN)</label>
+                            <input type="text" name="about_agents_en" value={formData.about_agents_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">الوكالات والماركات الحصرية (AR)</label>
+                            <input type="text" name="about_agents_ar" value={formData.about_agents_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" dir="rtl" />
+                        </div>
                     </div>
                 </div>
 
@@ -112,42 +185,47 @@ export default function AdminSettingsPage() {
                             <input type="email" name="contact_email" value={formData.contact_email} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
                         </div>
                         <div className="space-y-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase">Regional Headquarters Address</label>
-                            <input type="text" name="contact_address" value={formData.contact_address} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                            <label className="block text-xs font-bold text-gray-500 uppercase">HQ Address (EN)</label>
+                            <input type="text" name="contact_address_en" value={formData.contact_address_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
                         </div>
                         <div className="space-y-1">
-                            <label className="block text-xs font-bold text-gray-500 uppercase">Showroom/Sale Hall Address String</label>
-                            <input type="text" name="contact_hall_location" value={formData.contact_hall_location} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                            <label className="block text-xs font-bold text-gray-500 uppercase">عنوان المقر الرئيسي (AR)</label>
+                            <input type="text" name="contact_address_ar" value={formData.contact_address_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" dir="rtl" />
                         </div>
-                        <div className="md:col-span-2 space-y-1">
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">Showroom Address String (EN)</label>
+                            <input type="text" name="contact_hall_location_en" value={formData.contact_hall_location_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                        </div>
+                        <div className="space-y-1">
+                            <label className="block text-xs font-bold text-gray-500 uppercase">عنوان صالة العرض (AR)</label>
+                            <input type="text" name="contact_hall_location_ar" value={formData.contact_hall_location_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" dir="rtl" />
+                        </div>
+                        <div className="space-y-1.5 md:col-span-2">
                             <label className="block text-xs font-bold text-blue-600 uppercase">Google Maps Embed URL (src attribute only)</label>
                             <input type="text" name="contact_map_url" value={formData.contact_map_url} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-blue-300 rounded-lg bg-white text-sm font-mono text-xs" />
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Footer & Social Media (القسم الجديد الديناميكي) */}
+                {/* 3. Footer & Social Media */}
                 <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-xs">
                     <h3 className="text-base font-bold text-gray-800 border-b border-gray-100 pb-2 mb-4">3. Footer & Social Media Settings</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        
-                        {/* قوائم الفوتر الديناميكية */}
                         <div className="space-y-4">
                             <div className="space-y-1">
-                                <label className="block text-xs font-bold text-gray-500 uppercase">
-                                    Footer Branches <span className="text-blue-500 normal-case">(Write each branch on a new line)</span>
-                                </label>
-                                <textarea name="footer_branches" rows="4" placeholder="Jnah, Said Al Khansa St.&#10;Zalqa, Main Road" value={formData.footer_branches} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono leading-relaxed" />
+                                <label className="block text-xs font-bold text-gray-500 uppercase">Footer Branches (EN)</label>
+                                <textarea name="footer_branches_en" rows="3" placeholder="Zalqa, Main Road" value={formData.footer_branches_en} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono leading-relaxed" />
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-xs font-bold text-gray-500 uppercase">
-                                    Footer Phone Numbers <span className="text-blue-500 normal-case">(Write each number on a new line)</span>
-                                </label>
-                                <textarea name="footer_phones" rows="3" placeholder="+961 71 222 667&#10;+961 1 855 175" value={formData.footer_phones} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono leading-relaxed" />
+                                <label className="block text-xs font-bold text-gray-500 uppercase">فروع الفوتر (AR)</label>
+                                <textarea name="footer_branches_ar" rows="3" placeholder="دمشق، شارع البحصة" value={formData.footer_branches_ar} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono leading-relaxed" dir="rtl" />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="block text-xs font-bold text-gray-500 uppercase">Footer Phone Numbers</label>
+                                <textarea name="footer_phones" rows="3" placeholder="+963 11 222 333" value={formData.footer_phones} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm font-mono leading-relaxed" />
                             </div>
                         </div>
 
-                        {/* روابط السوشيال ميديا */}
                         <div className="space-y-3">
                             <div className="space-y-1">
                                 <label className="block text-xs font-bold text-blue-600 uppercase">Facebook URL</label>
@@ -158,20 +236,19 @@ export default function AdminSettingsPage() {
                                 <input type="url" name="social_instagram" placeholder="https://instagram.com/..." value={formData.social_instagram} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
                             </div>
                             <div className="space-y-1">
-                                <label className="block text-xs font-bold text-blue-500 uppercase">LinkedIn URL</label>
-                                <input type="url" name="social_linkedin" placeholder="https://linkedin.com/..." value={formData.social_linkedin} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
+                                <label className="block text-xs font-bold text-red-600 uppercase">YouTube Channel URL</label>
+                                <input type="url" name="social_youtube" placeholder="https://youtube.com/@..." value={formData.social_youtube} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:border-red-400 focus:ring-1 focus:ring-red-400" />
                             </div>
                             <div className="space-y-1">
                                 <label className="block text-xs font-bold text-gray-800 uppercase">X (Twitter) URL</label>
                                 <input type="url" name="social_twitter" placeholder="https://x.com/..." value={formData.social_twitter} onChange={handleInputChange} className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm" />
                             </div>
                         </div>
-
                     </div>
                 </div>
 
                 <div className="text-right">
-                    <button type="submit" disabled={uiStatus.submitting} className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-8 py-3 rounded-xl transition duration-150 disabled:opacity-50 shadow-md cursor-pointer text-sm">
+                    <button type="submit" disabled={uiStatus.submitting} className="bg-blue-600 text-white font-bold px-8 py-3 rounded-xl transition duration-150 disabled:opacity-50 shadow-md cursor-pointer text-sm hover:bg-blue-700">
                         {uiStatus.submitting ? 'Publishing Changes...' : 'Publish Content Metrics'}
                     </button>
                 </div>

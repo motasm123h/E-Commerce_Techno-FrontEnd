@@ -1,123 +1,148 @@
 import React from 'react';
-import { useSettings } from '../../app/SettingContext';
+// import { useSettings } from '../../app/SettingContext';
+import { useTranslation } from 'react-i18next';
+import { useGlobalApp } from '../../app/AppContext';
+const ContactSkeleton = () => {
+    return (
+        <div className="bg-[#f8fafc] min-h-screen py-12 px-4 sm:px-6 lg:px-8 animate-pulse">
+            <div className="max-w-4xl mx-auto space-y-8">
+                <div className="text-center py-4 flex justify-center">
+                    <div className="h-8 bg-slate-200 rounded-xl w-1/4" />
+                </div>
+                <div className="w-full h-[400px] bg-slate-200 rounded-2xl" />
+                <div className="bg-white rounded-2xl p-8 space-y-4 border border-slate-100">
+                    <div className="h-5 bg-slate-200 rounded w-1/5 mx-auto" />
+                    <div className="h-4 bg-slate-100 rounded w-1/3 mx-auto" />
+                    <div className="h-4 bg-slate-100 rounded w-1/2 mx-auto" />
+                </div>
+            </div>
+        </div>
+    );
+};
 
 export default function ContactUsPage() {
-    const { settings, loading, error } = useSettings();
+    const { settings, loading, error } = useGlobalApp();
+    const { t, i18n } = useTranslation();
 
-    if (loading) return <div className="text-center py-24 text-gray-400 font-medium animate-pulse">Loading location maps...</div>;
-    if (error) return <div className="text-center py-24 text-red-500 font-medium">{error}</div>;
+    const isRtl = i18n.language === 'ar';
 
-    const cleanWhatsapp = settings.contact_whatsapp ? settings.contact_whatsapp.replace(/[^0-9]/g, '') : '';
+    if (loading) return <ContactSkeleton />;
+    if (error) return <div className="text-center py-24 text-rose-600 font-bold text-xs bg-rose-50/50 rounded-xl max-w-md mx-auto my-12 border border-rose-100 px-4">{error}</div>;
 
-    // --- الدالة الذكية لمعالجة وتنظيف رابط الخريطة تلقائياً ---
+    // فك تنظيف أرقام الواتساب للروابط الخارجية
+    const whatsappRaw = settings?.contact_whatsapp?.[i18n.language] || settings?.contact_whatsapp?.en || settings?.contact_whatsapp || '';
+    const cleanWhatsapp = whatsappRaw.replace(/[^0-9]/g, '');
+
     const getSafeMapUrl = (inputUrl) => {
         if (!inputUrl) return null;
-
-        // حالة 1: إذا قام الآدمن بنسخ كود الـ iframe بالكامل بالخطأ، نستخرج الـ src منه فقط
-        if (inputUrl.includes('<iframe')) {
-            const match = inputUrl.match(/src="([^"]+)"/);
+        const targetUrl = typeof inputUrl === 'object' ? (inputUrl[i18n.language] || inputUrl['en']) : inputUrl;
+        if (!targetUrl) return null;
+        if (targetUrl.includes('<iframe')) {
+            const match = targetUrl.match(/src="([^"]+)"/);
             if (match && match[1]) return match[1];
         }
-
-        // حالة 2: تنظيف أي علامات تنصيص زائدة قد تسبب خطأ 400
-        return inputUrl.replace(/["']/g, '').trim();
+        return targetUrl.replace(/["']/g, '').trim();
     };
 
-    const safeMapUrl = getSafeMapUrl(settings.contact_map_url);
+    const safeMapUrl = getSafeMapUrl(settings?.contact_map_url);
+
+    const addressText = settings?.contact_address?.[i18n.language] || settings?.contact_address?.en || '';
+    const hallLocationText = settings?.contact_hall_location?.[i18n.language] || settings?.contact_hall_location?.en || '';
 
     return (
-        <div className="bg-white min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-7xl mx-auto">
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+        <div className="bg-white min-h-screen py-12 px-4 sm:px-6 lg:px-8 text-center font-sans">
+            <div className="max-w-5xl mx-auto space-y-8">
+                
+                <div className="pb-2">
+                    <h1 className="text-2xl md:text-3xl font-black text-slate-800 uppercase tracking-wide">
+                        {isRtl ? 'معلومات الاتصال بنا' : 'Contact Information'}
+                    </h1>
+                </div>
+
+                <div className="w-full h-[350px] md:h-[450px] rounded-2xl overflow-hidden border border-slate-100 shadow-3xs bg-slate-50 relative">
+                    {safeMapUrl ? (
+                        <iframe 
+                            src={safeMapUrl} 
+                            width="100%" 
+                            height="100%" 
+                            style={{ border: 0 }} 
+                            allowFullScreen="" 
+                            loading="lazy" 
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Google Maps Location Frame"
+                            className="absolute inset-0"
+                        />
+                    ) : (
+                        <div className="absolute inset-0 flex items-center justify-center text-xs text-slate-400 font-bold uppercase tracking-widest bg-[#f8fafc] italic">
+                            No active Google Maps Embed link registered by Administrator.
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-[#f8fafc] p-8 md:p-12 rounded-2xl border border-slate-100/60 shadow-3xs space-y-6 max-w-4xl mx-auto">
                     
-                    {/* الجانب الأيسر: معلومات التواصل */}
-                    <div className="bg-gray-900 text-gray-100 p-8 rounded-2xl flex flex-col justify-between space-y-8 shadow-xl">
-                        <div className="space-y-6">
-                            <div>
-                                <h2 className="text-xl font-black tracking-tight text-white mb-1">Contact Info</h2>
-                                <p className="text-xs text-gray-400 font-medium">Get in touch with our tech support desks directly.</p>
-                            </div>
-
-                            <div className="space-y-4 text-sm font-semibold text-gray-200">
-                                {settings.contact_phone_1 && (
-                                    <a href={`tel:${settings.contact_phone_1}`} className="flex items-center space-x-3 hover:text-blue-400 transition cursor-pointer">
-                                        <span className="text-lg">📞</span>
-                                        <span>{settings.contact_phone_1}</span>
-                                    </a>
-                                )}
-
-                                {settings.contact_phone_2 && (
-                                    <a href={`tel:${settings.contact_phone_2}`} className="flex items-center space-x-3 hover:text-blue-400 transition cursor-pointer">
-                                        <span className="text-lg">🏢</span>
-                                        <span>{settings.contact_phone_2} <span className="text-xs text-blue-400 font-bold ml-1">(Sale Hall)</span></span>
-                                    </a>
-                                )}
-
-                                {settings.contact_whatsapp && (
-                                    <a 
-                                        href={`https://wa.me/${cleanWhatsapp}`} 
-                                        target="_blank" 
-                                        rel="noopener noreferrer"
-                                        className="flex items-center space-x-3 text-green-400 font-bold hover:text-green-300 hover:underline transition group cursor-pointer"
-                                    >
-                                        <span className="text-lg group-hover:scale-110 transition duration-150">💬</span>
-                                        <div className="flex flex-col items-start">
-                                            <span className="text-gray-400 text-[10px] uppercase tracking-wider font-bold">Chat on WhatsApp</span>
-                                            <span>{settings.contact_whatsapp}</span>
-                                        </div>
-                                    </a>
-                                )}
-
-                                {settings.contact_email && (
-                                    <a href={`mailto:${settings.contact_email}`} className="flex items-center space-x-3 text-xs font-mono text-gray-300 hover:text-blue-400 transition cursor-pointer">
-                                        <span className="text-sm">✉️</span>
-                                        <span>{settings.contact_email}</span>
-                                    </a>
-                                )}
-                            </div>
+                    {settings?.contact_email && (
+                        <div className="space-y-1">
+                            <a href={`mailto:${settings.contact_email?.[i18n.language]}`} className="text-sm md:text-base font-black text-slate-800 hover:text-[#00cc88] transition-colors duration-200">
+                                {settings.contact_email?.[i18n.language]}
+                            </a>
                         </div>
+                    )}
 
-                        <div className="border-t border-gray-800 pt-6 space-y-3 text-xs text-gray-300 font-medium">
-                            <div>
-                                <span className="block font-bold uppercase text-gray-500 mb-0.5">Corporate HQ Address:</span>
-                                <p>{settings.contact_address || 'Lattakia, Syria'}</p>
-                            </div>
-                            <div>
-                                <span className="block font-bold uppercase text-gray-500 mb-0.5">Showroom & Sales Hall:</span>
-                                <p className="text-blue-400 font-semibold">{settings.contact_hall_location || 'University residence st - Alzeraha'}</p>
-                            </div>
-                        </div>
+                    <div className="space-y-3 text-xs md:text-sm font-bold text-slate-600">
+                        {settings?.contact_phone_1?.[i18n.language] && (
+                            <p dir="ltr">
+                                <a href={`tel:${settings.contact_phone_1?.[i18n.language]}`} className="hover:text-[#00cc88] transition-colors font-mono">
+                                    {settings.contact_phone_1?.[i18n.language]}
+                                </a>
+                                <span className="text-slate-400 font-sans mx-1.5">{isRtl ? '(خط المبيعات المباشر)' : '(Direct sales line)'}</span>
+                            </p>
+                        )}
+
+                        {settings?.contact_phone_2?.[i18n.language] && (
+                            <p dir="ltr">
+                                <a href={`tel:${settings.contact_phone_2?.[i18n.language]}`} className="hover:text-[#00cc88] transition-colors font-mono">
+                                    {settings.contact_phone_2?.[i18n.language]}
+                                </a>
+                                <span className="text-slate-400 font-sans mx-1.5">{isRtl ? '(مبيعات الشركات المباشرة)' : '(Corporate Direct Sales)'}</span>
+                            </p>
+                        )}
+
+                        {whatsappRaw && (
+                            <p dir="ltr">
+                                <a href={`https://wa.me/${cleanWhatsapp}`} target="_blank" rel="noopener noreferrer" className="text-[#00cc88] font-black hover:text-[#00b374] transition-colors font-mono">
+                                    {whatsappRaw}
+                                </a>
+                                <span className="text-slate-400 font-sans mx-1.5">{isRtl ? '(اتصال واتساب فوري)' : '(Direct WhatsApp Support)'}</span>
+                            </p>
+                        )}
                     </div>
 
-                    {/* الجانب الأيمن: الخريطة التفاعلية المقاومة للأخطاء */}
-                    <div className="lg:col-span-2 bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-xs flex flex-col justify-between min-h-[450px]">
-                        <div className="mb-3 pl-2">
-                            <h3 className="text-sm font-black uppercase text-gray-800 tracking-wide">Find us on Google Maps</h3>
-                            <p className="text-xs text-gray-400 font-medium">Live directional mapping route link to our showroom gates.</p>
-                        </div>
-                        
-                        <div className="w-full flex-1 rounded-xl overflow-hidden border border-gray-200 bg-white relative">
-                            {safeMapUrl ? (
-                                <iframe 
-                                    src={safeMapUrl} // يمرر الرابط هنا بعد تنظيفه وفلترته أوتوماتيكياً
-                                    width="100%" 
-                                    height="100%" 
-                                    style={{ border: 0 }} 
-                                    allowFullScreen="" 
-                                    loading="lazy" 
-                                    referrerPolicy="no-referrer-when-downgrade"
-                                    title="Google Maps Location Frame"
-                                    className="absolute inset-0"
-                                />
-                            ) : (
-                                <div className="absolute inset-0 flex items-center justify-center text-sm text-gray-400 font-medium italic">
-                                    No active Google Maps Embed link registered by Administrator.
-                                </div>
-                            )}
-                        </div>
+                    <div className="space-y-3 pt-4 border-t border-slate-200/50 text-xs md:text-sm text-slate-600 font-medium">
+                        {addressText && (
+                            <p className="leading-relaxed">
+                                <span className="font-black text-slate-400 block sm:inline uppercase sm:after:content-[':'] sm:after:mx-1">{isRtl ? 'المقر الرئيسي' : 'Address'}</span>
+                                {addressText}
+                            </p>
+                        )}
+                        {hallLocationText && (
+                            <p className="leading-relaxed text-[#00cc88] font-black">
+                                <span className="font-black text-slate-400 block sm:inline uppercase sm:after:content-[':'] sm:after:mx-1">{isRtl ? 'صالة العرض والمبيعات' : 'Showroom'}</span>
+                                {hallLocationText}
+                            </p>
+                        )}
+                    </div>
+
+                    <div className="pt-4 text-[11px] md:text-xs text-slate-400 font-semibold leading-relaxed max-w-2xl mx-auto border-t border-slate-200/40">
+                        {isRtl ? (
+                            <p>إذا كانت خطوط الهاتف مشغولة، يرجى إعادة الاتصال بعد بضع دقائق أو مراسلتنا عبر البريد الإلكتروني مباشرة.</p>
+                        ) : (
+                            <p>If our phone lines are busy, please call back in few minutes or email us directly at our customer desk.</p>
+                        )}
                     </div>
 
                 </div>
+
             </div>
         </div>
     );

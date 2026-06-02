@@ -1,55 +1,99 @@
-import { useSettings } from '../../app/SettingContext';
+// import { useSettings } from '../../app/SettingContext';
+import { useTranslation } from 'react-i18next';
+import { useGlobalApp } from '../../app/AppContext';
+
+
+const PageSkeleton = () => {
+    return (
+        <div className="bg-[#f8fafc] min-h-screen py-16 px-4 sm:px-6 lg:px-8 animate-pulse">
+            <div className="max-w-5xl mx-auto space-y-12">
+                <div className="text-center py-4 flex justify-center">
+                    <div className="h-10 bg-slate-200 rounded-xl w-1/4" />
+                </div>
+                {[...Array(2)].map((_, i) => (
+                    <div key={i} className="bg-white border border-slate-100 rounded-2xl p-10 space-y-4">
+                        <div className="h-5 bg-slate-200 rounded w-1/5 mx-auto" />
+                        <div className="h-4 bg-slate-100 rounded w-3/4 mx-auto" />
+                        <div className="h-4 bg-slate-100 rounded w-2/3 mx-auto" />
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 
 export default function AboutUsPage() {
-    const { settings, loading, error } = useSettings();
+    const { settings, loading, error } = useGlobalApp();
+    const { t, i18n } = useTranslation();
 
-    if (loading) return <div className="text-center py-24 text-gray-400 font-medium animate-pulse">Loading corporate metrics...</div>;
-    if (error) return <div className="text-center py-24 text-red-500 font-medium">{error}</div>;
+    const isRtl = i18n.language === 'ar';
 
+    if (loading) return <PageSkeleton />;
+    if (error) return <div className="text-center py-24 text-rose-600 font-bold text-xs bg-rose-50/50 rounded-xl max-w-md mx-auto my-12 border border-rose-100 px-4">{error}</div>;
+    const foundationText = settings?.about_foundation?.[i18n.language] || settings?.about_foundation?.en || '';
+    const historyText = settings?.about_history?.[i18n.language] || settings?.about_history?.en || '';
+    const whoWeAreText = settings?.about_who_we_are?.[i18n.language] || settings?.about_who_we_are?.en || '';
+    const agentsText = settings?.about_agents?.[i18n.language] || settings?.about_agents?.en || '';
+    
     return (
-        <div className="bg-white min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-            <div className="max-w-4xl mx-auto space-y-12">
-                {/* شعار الشركة الرئيسي المستوحى من الصورة الثانية بلمسة بيضاء وعصرية */}
-                <div className="text-center py-4 border-b border-gray-100">
-                    <h1 className="text-5xl font-black tracking-tighter text-gray-900 select-none">
-                        <span className="text-gray-500">TECHNO</span> <span className="text-green-300">TITAN</span>
+        <div className="bg-white min-h-screen py-16 px-4 sm:px-6 lg:px-8 text-center">
+            <div className="max-w-5xl mx-auto space-y-12">
+                
+                <div className="pb-4">
+                    <h1 className="text-3xl md:text-4xl font-black tracking-tight text-slate-900 select-none uppercase">
+                        {isRtl ? (
+                            <>حول <span className="text-[#00cc88]">تكنو تايتان</span> سوريا</>
+                        ) : (
+                            <>About <span className="text-slate-400">TECHNO</span> <span className="text-[#00cc88]">TITAN</span> Syria</>
+                        )}
                     </h1>
                 </div>
 
-                <div className="space-y-3">
-                    <h2 className="text-lg font-black text-blue-600 uppercase tracking-wider border-r-4 border-blue-600 pr-3 text-right">
-                        Foundation / التأسيس
-                    </h2>
-                    <p className="text-sm text-gray-600 font-medium leading-relaxed bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                        {settings.about_foundation || 'No foundation criteria data loaded.'}
-                    </p>
-                </div>
-
-                <div className="space-y-3">
-                    <h2 className="text-lg font-black text-blue-600 uppercase tracking-wider border-r-4 border-blue-600 pr-3 text-right">
-                        History / مسيرتنا عبر التاريخ
-                    </h2>
-                    <p className="text-sm text-gray-600 font-medium leading-relaxed whitespace-pre-line bg-gray-50 p-5 rounded-2xl border border-gray-100">
-                        {settings.about_history || 'No timeline records available.'}
-                    </p>
-                </div>
-
-                <div className="space-y-3">
-                    <h2 className="text-lg font-black text-blue-600 uppercase tracking-wider border-r-4 border-blue-600 pr-3 text-right">
-                        Who Are We / من نحن
-                    </h2>
-                    <div className="bg-gray-50 p-5 rounded-2xl border border-gray-100 space-y-4">
-                        <p className="text-sm text-gray-600 font-medium leading-relaxed">
-                            {settings.about_who_we_are}
+                {foundationText && (
+                    <div className="bg-[#f8fafc] p-8 md:p-12 rounded-2xl border border-slate-100/50 space-y-4">
+                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-wider">
+                            {isRtl ? 'رؤيتنا ورسالتنا' : 'Our Mission'}
+                        </h2>
+                        <p className="text-[13px] md:text-sm text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto whitespace-pre-line">
+                            {foundationText}
                         </p>
-                        {settings.about_agents && (
-                            <div className="border-t border-gray-200/60 pt-3">
-                                <span className="text-xs font-bold text-gray-400 uppercase block mb-1">Exclusive System Agents:</span>
-                                <span className="text-sm font-black text-gray-800 tracking-wide">{settings.about_agents}</span>
-                            </div>
-                        )}
                     </div>
-                </div>
+                )}
+
+                {historyText && (
+                    <div className="bg-[#f8fafc] p-8 md:p-12 rounded-2xl border border-slate-100/50 space-y-4">
+                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-wider">
+                            {isRtl ? 'مسيرتنا عبر التاريخ' : 'Our Corporate History'}
+                        </h2>
+                        <p className="text-[13px] md:text-sm text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto whitespace-pre-line">
+                            {historyText}
+                        </p>
+                    </div>
+                )}
+
+                {whoWeAreText && (
+                    <div className="bg-[#f8fafc] p-8 md:p-12 rounded-2xl border border-slate-100/50 space-y-4">
+                        <h2 className="text-lg font-black text-slate-800 uppercase tracking-wider">
+                            {isRtl ? 'منتجاتنا وأنظمتنا' : 'Our Products & Systems'}
+                        </h2>
+                        <div className="text-[13px] md:text-sm text-slate-600 font-medium leading-relaxed max-w-3xl mx-auto space-y-4">
+                            <p className="whitespace-pre-line">
+                                {whoWeAreText}
+                            </p>
+                            
+                            {agentsText && (
+                                <div className="border-t border-slate-200/60 pt-6 mt-4">
+                                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+                                        {isRtl ? 'الوكالات والماركات المعتمدة:' : 'Authorized Ecosystem Marks:'}
+                                    </span>
+                                    <span className="text-sm font-black text-slate-800 tracking-wide uppercase">
+                                        {agentsText}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
 
             </div>
         </div>

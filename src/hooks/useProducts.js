@@ -79,6 +79,9 @@
 //     return { products, loading, error };
 // }
 
+
+
+
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import api from '../services/api';
@@ -101,10 +104,9 @@ export function useProducts() {
             try {
                 setLoading(true);
                 
-                // 1. قراءة المعاملات الحالية من رابط الـ URL في المتصفح
                 const queryParams = new URLSearchParams(location.search);
                 
-                // 2. تجميع المعاملات لإرسالها مباشرة إلى دالة getProducts في لارافل
+                // 1. التقاط الحقول الفردية الأساسية تلقائياً
                 const params = {};
                 if (queryParams.get('page')) params.page = queryParams.get('page');
                 if (queryParams.get('search')) params.search = queryParams.get('search');
@@ -115,16 +117,20 @@ export function useProducts() {
                 if (queryParams.get('max_price')) params.max_price = queryParams.get('max_price');
                 if (queryParams.get('sort_by')) params.sort_by = queryParams.get('sort_by');
 
-                // 3. استدعاء الـ API مع المعاملات
+                // 2. السحر المصلح: التقاط مصفوفة الـ Checkboxes بالكامل وإرسالها باسم "attribute_values"
+                // التابع getAll يسحب كل الـ IDs المحددة كـ Array حقيقية [1, 2, 4] يفهمها لارافل فوراً
+                const attrValues = queryParams.getAll('attribute_values[]');
+                if (attrValues.length > 0) {
+                    params.attribute_values = attrValues;
+                }
+
+                // 3. استدعاء الـ API مع المعاملات الشاملة المصلحة
                 const response = await api.get('/public/products', { params });
                 
-                // بما أن لارافل يغلف الـ Pagination بداخل كائن عند استخدام Resource Collection:
                 const serverData = response.data;
                 
-                // المنتجات تعيش داخل مصفوفة data
                 setProducts(serverData.data || []);
                 
-                // معلومات التنقل والـ Pagination تعيش في الطبقة العلوية أو داخل meta
                 setPagination({
                     current_page: serverData.current_page || serverData.meta?.current_page || 1,
                     last_page: serverData.last_page || serverData.meta?.last_page || 1,
@@ -136,13 +142,13 @@ export function useProducts() {
                 setError(null);
             } catch (err) {
                 setError('Failed to fetch store inventory records.');
-            } finally {
+            } file: {
                 setLoading(false);
             }
         };
 
         fetchStoreProducts();
-    }, [location.search]); // يعيد جلب البيانات فور تغير أي فلتر أو رقم صفحة في رابط المتصفح
+    }, [location.search]); 
 
     return { products, pagination, loading, error };
 }

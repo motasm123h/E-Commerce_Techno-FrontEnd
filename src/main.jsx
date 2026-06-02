@@ -4,9 +4,10 @@ import App from './App.jsx';
 import { CartProvider } from './app/CartContext.jsx';
 import { AuthProvider } from './app/AuthContext.jsx';
 import { PcBuilderProvider } from './app/PcBuilderContext'
-import { SettingProvider } from './app/SettingContext'
+// import { SettingProvider } from './app/SettingContext'
 import './index.css';
 import { AppProvider } from './app/AppContext';
+import './i18n';
 
 createRoot(document.getElementById('root')).render(
     // <StrictMode>
@@ -14,9 +15,9 @@ createRoot(document.getElementById('root')).render(
             <CartProvider>
                 <AppProvider>
                     <PcBuilderProvider>
-                        <SettingProvider>
+                        {/* <SettingProvider> */}
                             <App />
-                        </SettingProvider>
+                        {/* </SettingProvider> */}
                     </PcBuilderProvider>
                 </AppProvider>
             </CartProvider>

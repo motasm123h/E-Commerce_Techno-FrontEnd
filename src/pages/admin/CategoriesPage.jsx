@@ -3,7 +3,8 @@ import { categoryApi } from '../../services/adminService';
 
 export default function CategoriesPage() {
     const [categories, setCategories] = useState([]);
-    const [name, setName] = useState('');
+    const [nameEn, setNameEn] = useState('');
+    const [nameAr, setNameAr] = useState('');
     const [editingId, setEditingId] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -23,20 +24,37 @@ export default function CategoriesPage() {
         fetchCategories();
     }, []);
 
+    const generateSlug = (text) => {
+        return text
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!name.trim()) return;
+        if (!nameEn.trim() || !nameAr.trim()) return;
+
+        const payload = {
+            name: {
+                en: nameEn.trim(),
+                ar: nameAr.trim()
+            },
+            slug: generateSlug(nameEn.trim()) // 🔥 إضافة الـ slug لحل خطأ 422
+        };
 
         try {
             if (editingId) {
-                // تمرير المعرف متبوعاً بالكائن المطابق تماماً لما ينتظره شرط الباك إند عندك
-                await categoryApi.update(editingId, { name: name.trim() });
+                await categoryApi.update(editingId, payload);
                 setEditingId(null);
             } else {
-                await categoryApi.create({ name: name.trim() });
+                await categoryApi.create(payload);
             }
-            setName('');
-            fetchCategories(); // تحديث فوري آمن ومضمون للعلاقات
+            setNameEn('');
+            setNameAr('');
+            fetchCategories(); 
         } catch (err) {
             alert(err.response?.data?.message || "Failed to save category block criteria.");
         }
@@ -44,7 +62,14 @@ export default function CategoriesPage() {
 
     const startEdit = (cat) => {
         setEditingId(cat.id);
-        setName(cat.name);
+        setNameEn(cat.name?.en || cat.name || '');
+        setNameAr(cat.name?.ar || '');
+    };
+
+    const cancelEdit = () => {
+        setEditingId(null);
+        setNameEn('');
+        setNameAr('');
     };
 
     const handleDelete = async (id) => {
@@ -60,24 +85,37 @@ export default function CategoriesPage() {
     if (loading) return <div className="p-6 text-gray-500 font-medium">Loading categories directory...</div>;
 
     return (
-        <div className="space-y-6 max-w-2xl">
+        <div className="space-y-6 max-w-3xl">
             <h1 className="text-xl font-black text-gray-900 uppercase tracking-wide">Categories Directory</h1>
             
-            <form onSubmit={handleSubmit} className="bg-white p-4 rounded-xl border border-gray-200 flex items-center gap-3 shadow-xs">
-                <input 
-                    type="text" 
-                    placeholder="Type Category Label (e.g., Electronics, Hardware)..." 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 font-medium"
-                    required
-                />
-                <button type="submit" className="bg-gray-900 hover:bg-blue-600 text-white font-bold text-xs uppercase px-5 py-2.5 rounded-lg transition cursor-pointer tracking-wider">
-                    {editingId ? 'Save Update' : 'Add Category'}
-                </button>
-                {editingId && (
-                    <button type="button" onClick={() => { setEditingId(null); setName(''); }} className="text-xs font-bold text-gray-400 hover:text-gray-600 transition">Cancel</button>
-                )}
+            <form onSubmit={handleSubmit} className="bg-white p-5 rounded-xl border border-gray-200 space-y-4 shadow-xs">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input 
+                        type="text" 
+                        placeholder="Category Label (English)..." 
+                        value={nameEn} 
+                        onChange={(e) => setNameEn(e.target.value)} 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 font-medium"
+                        required
+                    />
+                    <input 
+                        type="text" 
+                        placeholder="اسم التصنيف (بالعربية)..." 
+                        value={nameAr} 
+                        onChange={(e) => setNameAr(e.target.value)} 
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:border-blue-500 font-medium"
+                        required
+                        dir="rtl"
+                    />
+                </div>
+                <div className="flex justify-end gap-3 items-center">
+                    {editingId && (
+                        <button type="button" onClick={cancelEdit} className="text-xs font-bold text-gray-400 hover:text-gray-600 transition">Cancel</button>
+                    )}
+                    <button type="submit" className="bg-gray-900 hover:bg-blue-600 text-white font-bold text-xs uppercase px-5 py-2.5 rounded-lg transition cursor-pointer tracking-wider">
+                        {editingId ? 'Save Update' : 'Add Category'}
+                    </button>
+                </div>
             </form>
 
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-2xs">
@@ -87,7 +125,11 @@ export default function CategoriesPage() {
                     ) : (
                         categories.map(cat => (
                             <li key={cat.id} className="p-4 flex justify-between items-center hover:bg-gray-50/60 transition text-sm font-semibold text-gray-700">
-                                <span>{cat.name}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-gray-900">{cat.name?.en || cat.name}</span>
+                                    <span className="text-gray-300">|</span>
+                                    <span className="text-gray-500" dir="rtl">{cat.name?.ar || '—'}</span>
+                                </div>
                                 <div className="space-x-3 text-xs font-bold">
                                     <button onClick={() => startEdit(cat)} className="text-amber-600 hover:underline cursor-pointer">✏️ Edit</button>
                                     <button onClick={() => handleDelete(cat.id)} className="text-red-600 hover:underline cursor-pointer">Delete</button>

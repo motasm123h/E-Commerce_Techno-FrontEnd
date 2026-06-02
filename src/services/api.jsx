@@ -39,15 +39,31 @@ const api = axios.create({
     }
 });
 
+// export const getImageUrl = (imagePath) => {
+//     if (!imagePath) return null;
+    
+//     // If the path is already an absolute URL, return it unchanged
+//     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+//         return imagePath;
+//     }
+    
+//     // Prefix the path with our centralized backend domain location
+//     return `${BACKEND_URL}${imagePath}`;
+// };
+
+
 export const getImageUrl = (imagePath) => {
     if (!imagePath) return null;
-    
-    // If the path is already an absolute URL, return it unchanged
+    if (Array.isArray(imagePath)) {
+        imagePath = imagePath[0];
+    }
+    if (typeof imagePath !== 'string') {
+        return null; 
+    }
+
     if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
         return imagePath;
     }
-    
-    // Prefix the path with our centralized backend domain location
     return `${BACKEND_URL}${imagePath}`;
 };
 

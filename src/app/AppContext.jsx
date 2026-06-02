@@ -6,45 +6,50 @@ const AppContext = createContext();
 export function AppProvider({ children }) {
     const [navItems, setNavItems] = useState([]);
     const [settings, setSettings] = useState({});
-    
-    // 1. إضافة الـ State الناقصة للأقسام والإعلانات
     const [homeSections, setHomeSections] = useState([]);
     const [homeAds, setHomeAds] = useState([]);
-    
-    const [loading, setLoading] = useState(true);
+
+    const [navLoading, setNavLoading] = useState(true);
+    const [settingsLoading, setSettingsLoading] = useState(true);
 
     useEffect(() => {
-        const fetchGlobalData = async () => {
-            try {
-                setLoading(true);
-                const [navRes, settingsRes, sectionsRes, adsRes] = await Promise.all([
-                    api.get('/public/store-navigation'),
-                    api.get('/public/settings'),
-                    api.get('/public/home-sections'),
-                    api.get('/public/advertisements')
-                ]);
-                if (navRes.data) setNavItems(navRes.data);
-                if (settingsRes.data) setSettings(settingsRes.data);
-                // console.log(settingsRes.data)
-                
-                if (sectionsRes.data?.data) setHomeSections(sectionsRes.data.data);
-                if (adsRes.data?.data) setHomeAds(adsRes.data.data);
+        api.get('/public/store-navigation')
+            .then(res => {
+                if (res.data) setNavItems(res.data);
+            })
+            .catch(err => console.error("Nav error", err))
+            .finally(() => setNavLoading(false));
 
-            } catch (error) {
-                console.error("Failed to load global app data", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchGlobalData();
-    }, []); // مصفوفة فارغة تعني: اشتغل مرة واحدة فقط عند البداية
+        api.get('/public/settings')
+            .then(res => {
+                if (res.data) setSettings(res.data);
+            })
+            .catch(err => console.error("Settings error", err))
+            .finally(() => setSettingsLoading(false));
+
+        api.get('/public/home-sections')
+            .then(res => {
+                if (res.data?.data) setHomeSections(res.data.data);
+            })
+            .catch(err => console.error("Sections error", err));
+
+        api.get('/public/advertisements')
+            .then(res => {
+                if (res.data?.data) setHomeAds(res.data.data);
+            })
+            .catch(err => console.error("Ads error", err));
+
+    }, []); 
+
+    
+    const globalLoading = navLoading || settingsLoading;
 
     const value = {
         navItems,
         settings,
         homeSections,
         homeAds,
-        loading
+        loading: globalLoading 
     };
 
     return (
